@@ -1,0 +1,4 @@
+.env
+infrastructure/pgadmin/pgpass
+infrastructure/pgadmin/servers.generated.json
+storage/

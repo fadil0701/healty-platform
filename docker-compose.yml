@@ -1,0 +1,203 @@
+# health-platform — infrastruktur bersama PPKP DKI
+# Lokal:   .\scripts\install-local.ps1
+# Produksi: ./scripts/install-production.sh  (lihat docs/deployment/PRODUCTION.md)
+#
+# Usage:
+#   cp .env.example .env                    # lokal
+#   cp .env.production.example .env         # VM produksi
+#   docker compose up -d
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+name: health-platform
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "5"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ppkp-postgres
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?Set POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: postgres
+      DASHBOARD_DB_PASSWORD: ${DASHBOARD_DB_PASSWORD:?Set DASHBOARD_DB_PASSWORD}
+      MCU_DB_PASSWORD: ${MCU_DB_PASSWORD:?Set MCU_DB_PASSWORD}
+      POSTGRES_SUPERUSER_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?Set POSTGRES_SUPERUSER_PASSWORD}
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - max_locks_per_transaction=512
+      - -c
+      - shared_buffers=256MB
+    volumes:
+      - ppkp_postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      ppkp-data:
+        aliases:
+          - sikerja-postgres
+          - mcu-monitor-postgres
+          - ppkp-postgres
+    logging: *default-logging
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: ppkp-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?Set PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGPASSFILE: /var/lib/pgadmin/.pgpass
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /pgpass-ro /var/lib/pgadmin/.pgpass
+        chmod 600 /var/lib/pgadmin/.pgpass
+        chown pgadmin:root /var/lib/pgadmin/.pgpass
+        exec /entrypoint.sh
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ppkp_pgadmin_data:/var/lib/pgadmin
+      - ./infrastructure/pgadmin/servers.generated.json:/pgadmin4/servers.json:ro
+      - ./infrastructure/pgadmin/pgpass:/pgpass-ro:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppkp-data
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    container_name: ppkp-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes
+    ports:
+      - "${REDIS_PUBLISH_PORT:-6379}:6379"
+    volumes:
+      - ppkp_redis_data:/data
+    networks:
+      - ppkp-data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+
+  minio:
+    image: minio/minio:latest
+    container_name: ppkp-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ppkp_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - ppkp_minio_data:/data
+    networks:
+      - ppkp-data
+    logging: *default-logging
+
+  postgres-exporter:
+    profiles: [monitoring]
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ppkp-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_SUPERUSER}:${POSTGRES_SUPERUSER_PASSWORD}@postgres:5432/postgres?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppkp-data
+      - ppkp-monitor
+    logging: *default-logging
+
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v2.54.0
+    container_name: ppkp-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ppkp_prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - ppkp-monitor
+    logging: *default-logging
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.2.0
+    container_name: ppkp-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?Set GRAFANA_PASSWORD}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ppkp_grafana_data:/var/lib/grafana
+    networks:
+      - ppkp-monitor
+    logging: *default-logging
+
+  loki:
+    profiles: [monitoring]
+    image: grafana/loki:3.1.0
+    container_name: ppkp-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ppkp_loki_data:/loki
+    networks:
+      - ppkp-monitor
+    logging: *default-logging
+
+networks:
+  ppkp-data:
+    name: ppkp-data
+  ppkp-monitor:
+    name: ppkp-monitor
+
+volumes:
+  ppkp_postgres_data:
+    name: ppkp_postgres_data
+  ppkp_pgadmin_data:
+    name: ppkp_pgadmin_data
+  ppkp_redis_data:
+    name: ppkp_redis_data
+  ppkp_minio_data:
+    name: ppkp_minio_data
+  ppkp_prometheus_data:
+    name: ppkp_prometheus_data
+  ppkp_grafana_data:
+    name: ppkp_grafana_data
+  ppkp_loki_data:
+    name: ppkp_loki_data

@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "PPKP PostgreSQL (lokal)",
+      "Group": "Development",
+      "Host": "ppkp-postgres",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "ppkp_dba_readonly",
+      "PassFile": "/var/lib/pgadmin/.pgpass",
+      "SSLMode": "prefer",
+      "Comment": "db_dashboard_skrining · db_mcu_monitor · tambah DB lain di server yang sama"
+    }
+  }
+}
