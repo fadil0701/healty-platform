@@ -61,14 +61,26 @@ fi
 
 load_env_file "$ROOT/.env"
 
+BIND="${INFRA_BIND_HOST:-127.0.0.1}"
+LAN_NOTE=""
+if [[ "$BIND" == "0.0.0.0" || "$BIND" == "*" ]]; then
+    LAN_NOTE=" (LAN — jalankan: sudo ./scripts/configure-firewall-production.sh --apply)"
+fi
+
 echo ""
 echo "health-platform (produksi) berjalan."
-echo "  PostgreSQL : 127.0.0.1:${POSTGRES_PUBLISH_PORT:-5435}  (ppkp-postgres / sikerja-postgres)"
+echo "  Bind host  : ${BIND}${LAN_NOTE}"
+echo "  PostgreSQL : ${BIND}:${POSTGRES_PUBLISH_PORT:-5435}"
 echo "    - sikerja_ppkp  (dashboard-skrining)"
 echo "    - mcu_monitor   (mcu-monitor)"
-echo "  pgAdmin    : 127.0.0.1:${PGADMIN_PORT:-5050}  (SSH tunnel dari laptop)"
-echo "  Redis      : 127.0.0.1:${REDIS_PUBLISH_PORT:-6380}"
-echo "  MinIO      : 127.0.0.1:${MINIO_CONSOLE_PORT:-9200} (console)"
+echo "  pgAdmin    : ${BIND}:${PGADMIN_PORT:-5050}"
+echo "  Redis      : ${BIND}:${REDIS_PUBLISH_PORT:-6380}"
+echo "  MinIO API  : ${BIND}:${MINIO_API_PORT:-9100}"
+echo "  MinIO UI   : ${BIND}:${MINIO_CONSOLE_PORT:-9200} (console browser)"
 echo "  Port map   : docs/deployment/PORTS.md"
+if [[ "$BIND" == "0.0.0.0" || "$BIND" == "*" ]]; then
+    echo "  Firewall   : docs/deployment/FIREWALL.md"
+    echo "               sudo ./scripts/configure-firewall-production.sh --apply"
+fi
 echo ""
 echo "Lanjut: docs/deployment/PRODUCTION.md"

@@ -1,7 +1,7 @@
-# Production override — bind layanan infra ke localhost VM saja.
-# Port host (kanan) via .env; port container (kiri) tetap standar image.
+# Production override — publish port infra ke host VM.
+# Bind address: INFRA_BIND_HOST di .env (127.0.0.1 = SSH tunnel saja; 0.0.0.0 = LAN + firewall).
 #
-# !reset pada `ports` wajib — tanpa ini Compose MENGGABUNGKAN port dari
+# !override pada `ports` wajib — tanpa ini Compose MENGGABUNGKAN port dari
 # docker-compose.yml (5432, 6379, …) dan produksi, sehingga bentrok dengan
 # postgres/redis lain di host VM.
 #
@@ -9,33 +9,37 @@
 #   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
 # Default host port: PostgreSQL 5435 | Redis 6380 | MinIO 9100/9200 | Grafana 3200
+# Firewall LAN: ./scripts/configure-firewall-production.sh
 
 services:
   postgres:
-    ports: !reset
-      - "127.0.0.1:${POSTGRES_PUBLISH_PORT:-5435}:5432"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${POSTGRES_PUBLISH_PORT:-5435}:5432"
 
   pgadmin:
-    ports: !reset
-      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
 
   redis:
-    ports: !reset
-      - "127.0.0.1:${REDIS_PUBLISH_PORT:-6380}:6379"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${REDIS_PUBLISH_PORT:-6380}:6379"
 
   minio:
-    ports: !reset
-      - "127.0.0.1:${MINIO_API_PORT:-9100}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9200}:9001"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${MINIO_API_PORT:-9100}:9000"
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${MINIO_CONSOLE_PORT:-9200}:9001"
 
   prometheus:
-    ports: !reset
-      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
 
   grafana:
-    ports: !reset
-      - "127.0.0.1:${GRAFANA_PORT:-3200}:3000"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${GRAFANA_PORT:-3200}:3000"
 
   loki:
-    ports: !reset
-      - "127.0.0.1:${LOKI_PORT:-3100}:3100"
+    ports: !override
+      - "${INFRA_BIND_HOST:-127.0.0.1}:${LOKI_PORT:-3100}:3100"

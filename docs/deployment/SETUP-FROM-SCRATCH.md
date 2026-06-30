@@ -1,5 +1,8 @@
 # Setup dari awal — health-platform + Dashboard Skrining + MCU Monitor
 
+> **Panduan lengkap (produksi + migrasi):** [INSTALL-DAN-MIGRASI.md](./INSTALL-DAN-MIGRASI.md)  
+> Dokumen ini fokus **setup lokal Windows** (ringkas).
+
 Panduan urutan instalasi lokal (Windows + Docker Desktop) untuk stack PPKP DKI.
 
 ## Prasyarat

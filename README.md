@@ -1,11 +1,26 @@
-# Install health-platform
+# health-platform — infrastruktur bersama PPKP DKI
 
-| Lingkungan | Panduan | Perintah |
-|------------|---------|----------|
-| Lokal Windows | [docs/deployment/SETUP-FROM-SCRATCH.md](docs/deployment/SETUP-FROM-SCRATCH.md) | `.\scripts\install-local.ps1` |
-| Produksi VM Linux | [docs/deployment/PRODUCTION.md](docs/deployment/PRODUCTION.md) | `./scripts/install-production.sh` |
+PostgreSQL bersama, pgAdmin, Redis, dan MinIO untuk **dashboard-skrining** dan **mcu-monitor**.
 
-Port infra: [docs/deployment/PORTS.md](docs/deployment/PORTS.md) (lokal `5432` / produksi `5435`, dll.)
+## Panduan utama
+
+| Dokumen | Isi |
+|---------|-----|
+| **[INSTALL-DAN-MIGRASI.md](docs/deployment/INSTALL-DAN-MIGRASI.md)** | **Panduan lengkap** instalasi + migrasi MySQL→PG (lokal & produksi VM) |
+| [PRODUCTION-DEPLOY-WORKFLOW.md](docs/deployment/PRODUCTION-DEPLOY-WORKFLOW.md) | Deploy harian setelah migrasi, subdomain |
+| [FIREWALL.md](docs/deployment/FIREWALL.md) | Akses LAN + UFW/iptables |
+| [PORTS.md](docs/deployment/PORTS.md) | Port lokal vs produksi |
+| [DATABASE-NAMING.md](docs/deployment/DATABASE-NAMING.md) | `sikerja_ppkp`, `mcu_monitor`, alias host |
+| [APP-ENV.md](docs/deployment/APP-ENV.md) | Mapping password antar `.env` |
+
+## Perintah cepat
+
+| Lingkungan | Perintah |
+|------------|----------|
+| Lokal Windows | `.\scripts\install-local.ps1` |
+| Produksi VM | `./scripts/install-production.sh` |
+| Reset pgAdmin | `./scripts/reset-pgadmin.sh` |
+| Firewall LAN | `sudo ./scripts/configure-firewall-production.sh --apply` |
 
 ```powershell
 # Lokal
@@ -15,8 +30,10 @@ Copy-Item .env.example .env
 ```
 
 ```bash
-# Produksi VM
-cd /opt/health-platform
+# Produksi VM (10.15.101.117)
+cd /var/www/html/healty-platform
 cp .env.production.example .env
 ./scripts/install-production.sh
 ```
+
+Lanjut migrasi aplikasi: [INSTALL-DAN-MIGRASI.md](docs/deployment/INSTALL-DAN-MIGRASI.md)

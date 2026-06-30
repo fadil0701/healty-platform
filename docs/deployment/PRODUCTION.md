@@ -1,5 +1,8 @@
 # Deployment produksi — health-platform + SIKERJA + MCU
 
+> **Panduan lengkap instalasi + migrasi:** [INSTALL-DAN-MIGRASI.md](./INSTALL-DAN-MIGRASI.md)  
+> Dokumen ini detail **infra produksi**, backup, dan troubleshooting infra.
+
 Panduan VM Linux (`10.15.101.117`) dengan **PostgreSQL bersama**, tanpa error migrasi, pgAdmin/MinIO/Redis aman (bind `127.0.0.1`).
 
 Panduan lokal Windows: [SETUP-FROM-SCRATCH.md](./SETUP-FROM-SCRATCH.md)
@@ -147,9 +150,10 @@ Opsional monitoring:
 
 ### pgAdmin (produksi)
 
-- Hanya di `127.0.0.1:5050` — **bukan** internet publik
-- Akses dari laptop: SSH tunnel `ssh -L 5050:127.0.0.1:5050 user@10.15.101.117`
-- Browser: http://127.0.0.1:5050 — login `PGADMIN_EMAIL` / `PGADMIN_PASSWORD`
+- Bind: `INFRA_BIND_HOST` di `.env` (`127.0.0.1` atau `0.0.0.0`)
+- **Login wajib** (`PGADMIN_CONFIG_SERVER_MODE=True`)
+- LAN: http://10.15.101.117:5050 (dengan [FIREWALL.md](./FIREWALL.md))
+- SSH tunnel (jika `127.0.0.1`): `ssh -L 5050:127.0.0.1:5050 user@10.15.101.117`
 - Object Explorer: **Servers → Production → PPKP PostgreSQL (produksi)**
 - Database: `sikerja_ppkp`, `mcu_monitor`
 
@@ -162,7 +166,9 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 
 ### MinIO — arsip backup
 
-- Console: SSH tunnel `ssh -L 9200:127.0.0.1:9200 user@VM` → http://127.0.0.1:9200
+- Console LAN: http://10.15.101.117:9200 (`INFRA_BIND_HOST=0.0.0.0` + firewall)
+- API S3: port `9100` (skrip, bukan browser)
+- SSH tunnel (jika `127.0.0.1`): `ssh -L 9200:127.0.0.1:9200 user@VM`
 - Login: `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`
 - Bucket: `MINIO_BACKUP_BUCKET` (default `minio.sikerja`)
 
@@ -374,11 +380,14 @@ Ringkas:
 |--------|----------|--------|
 | `network ppkp-data not found` | health-platform belum jalan | `./scripts/install-production.sh` |
 | `.env: syntax error near (` | Nilai `.env` ada spasi/`()` tanpa kutip | Pakai `"..."` atau `git pull` + skrip terbaru (`load-env.sh`) |
-| `address already in use` (Redis/pg) | Port host bentrok — sering karena merge port compose tanpa `!reset` | `git pull` (fix `docker-compose.prod.yml`), lalu `compose down` + `up -d`; cek `ss -lntp` |
+| `address already in use` (Redis/pg) | Port host bentrok — merge port compose tanpa `!override` | `git pull` (fix `docker-compose.prod.yml`), lalu `compose down` + `up -d`; cek `ss -lntp` |
+| `docker ps` hanya `5432/tcp` tanpa `127.0.0.1:5435->` | `ports: !reset` menghapus publish | Ganti ke `!override` di `docker-compose.prod.yml`, `compose up -d --force-recreate` |
 | `password authentication failed` | Password tidak sinkron | Samakan `.env` + `ALTER USER` jika perlu |
 | `function curdate() does not exist` | Query MySQL di MCU | Rebuild image MCU (`docker compose build app`) |
 | `column "total_participants" does not exist` | HAVING alias di PG | Sudah diperbaiki di `QueryOptimizationService` — rebuild MCU |
 | pgAdmin kosong / gagal login | pgpass CRLF atau config lama | `./scripts/generate-pgadmin-config.sh` + recreate pgadmin |
+| pgAdmin `/browser/` tanpa login | `SERVER_MODE=False` (mode dev) | Pakai `docker-compose.prod.yml` (`SERVER_MODE=True`), recreate pgadmin |
+| `/login` JSON `auth_source_manager` | Volume lama (desktop mode) + switch server mode | `./scripts/reset-pgadmin.sh` lalu login di `http://127.0.0.1:5050/` (incognito) |
 | Migrasi gagal Spatie permission | Tabel tanpa kolom `id` | `mcu:migrate-mysql-to-pgsql` versi terbaru |
 | Bridge 401 | API key / header | Generate di UI CKG, header `X-Mcu-Api-Key` |
 | `APP_KEY` decrypt bridge gagal | Key lama | Generate ulang API key di UI |
@@ -411,6 +420,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app php art
 
 | Topik | File |
 |-------|------|
+| **Instalasi & migrasi lengkap** | [INSTALL-DAN-MIGRASI.md](./INSTALL-DAN-MIGRASI.md) |
+| **Firewall & akses LAN** | [FIREWALL.md](./FIREWALL.md) |
 | **Workflow deploy & subdomain (PG)** | [PRODUCTION-DEPLOY-WORKFLOW.md](./PRODUCTION-DEPLOY-WORKFLOW.md) |
 | **Port infra (lokal vs produksi)** | [PORTS.md](./PORTS.md) |
 | Penamaan DB | [DATABASE-NAMING.md](./DATABASE-NAMING.md) |

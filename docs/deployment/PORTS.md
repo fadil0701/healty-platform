@@ -4,10 +4,10 @@ Port **host** (akses dari VM / SSH tunnel). Aplikasi di Docker (`dashboard-skrin
 
 ## Produksi VM (`docker-compose.prod.yml` + `.env.production.example`)
 
-Compose **menggabungkan** `ports` dari `docker-compose.yml` dan `docker-compose.prod.yml` kecuali pakai `ports: !reset` di override produksi. Tanpa reset, PostgreSQL bisa ikut bind `5432` host dan bentrok dengan Postgres native di VM.
+Bind address: `INFRA_BIND_HOST` — `127.0.0.1` (SSH tunnel) atau `0.0.0.0` (LAN + **firewall wajib**). Lihat [FIREWALL.md](./FIREWALL.md).
 
-| Layanan | Variabel `.env` | Host (localhost VM) | Port container |
-|---------|-----------------|---------------------|----------------|
+| Layanan | Variabel `.env` | Host port | Port container |
+|---------|-----------------|-----------|----------------|
 | PostgreSQL | `POSTGRES_PUBLISH_PORT` | **5435** | 5432 |
 | pgAdmin | `PGADMIN_PORT` | **5050** | 80 |
 | Redis | `REDIS_PUBLISH_PORT` | **6380** | 6379 |
@@ -17,7 +17,15 @@ Compose **menggabungkan** `ports` dari `docker-compose.yml` dan `docker-compose.
 | Grafana | `GRAFANA_PORT` | **3200** | 3000 |
 | Loki | `LOKI_PORT` | **3100** | 3100 |
 
-SSH tunnel contoh:
+Akses LAN (`INFRA_BIND_HOST=0.0.0.0` + firewall):
+
+```text
+http://10.15.101.117:9200   MinIO Console (browser)
+http://10.15.101.117:9100   MinIO S3 API (bukan browser)
+http://10.15.101.117:5050   pgAdmin
+```
+
+SSH tunnel (jika `INFRA_BIND_HOST=127.0.0.1`):
 
 ```bash
 ssh -L 5050:127.0.0.1:5050 -L 9200:127.0.0.1:9200 user@10.15.101.117

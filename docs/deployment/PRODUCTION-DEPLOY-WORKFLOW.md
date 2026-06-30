@@ -1,5 +1,7 @@
 # Workflow deploy produksi — subdomain, PostgreSQL, dan update rutin
 
+> **Instalasi & migrasi dari awal:** [INSTALL-DAN-MIGRASI.md](./INSTALL-DAN-MIGRASI.md)
+
 Panduan ini menjawab pertanyaan umum setelah migrasi **MySQL → PostgreSQL (health-platform)**:
 
 - Apakah **subdomain** (`/sikerja/`, `/mcuppkp/`) masih jalan?
@@ -157,21 +159,12 @@ cd /opt/health-platform
 # 2. Dashboard — migrasi data + cutover .env
 cd /var/www/html/dashboard-skrining
 # Edit .env: DB_CONNECTION=pgsql, PGSQL_* (pertahankan APP_URL dll.)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app \
-  php artisan migrate --database=pgsql --force
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app \
-  php artisan sikerja:migrate-mysql-to-pgsql --fresh --verify
+./deploy/migrate-mysql-to-pgsql.sh
 ./deploy/update-production.sh
 
 # 3. MCU — sama
 cd /var/www/html/mcu-monitor
-docker compose --profile mysql-legacy up -d mysql   # sumber migrasi
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app \
-  php artisan migrate --database=pgsql --force
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app \
-  php artisan mcu:migrate-mysql-to-pgsql --fresh --verify
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app \
-  php artisan mcu:fix-pgsql-sequences
+./deploy/migrate-mysql-to-pgsql.sh
 ./deploy/update-production.sh
 
 # 4. Bridge — UI: generate API key CKG → tempel MCU
