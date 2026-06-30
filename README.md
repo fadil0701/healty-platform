@@ -5,6 +5,8 @@
 | Lokal Windows | [docs/deployment/SETUP-FROM-SCRATCH.md](docs/deployment/SETUP-FROM-SCRATCH.md) | `.\scripts\install-local.ps1` |
 | Produksi VM Linux | [docs/deployment/PRODUCTION.md](docs/deployment/PRODUCTION.md) | `./scripts/install-production.sh` |
 
+Port infra: [docs/deployment/PORTS.md](docs/deployment/PORTS.md) (lokal `5432` / produksi `5435`, dll.)
+
 ```powershell
 # Lokal
 cd E:\laragon\www\health-platform

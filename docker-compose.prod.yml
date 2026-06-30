@@ -1,12 +1,18 @@
 # Production override — bind layanan infra ke localhost VM saja.
+# Port host (kanan) via .env; port container (kiri) tetap standar image.
+#
 # Usage:
 #   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d
 #   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml --profile monitoring up -d
+#
+# Default host port (hindari bentrok dengan layanan lain di VM):
+#   PostgreSQL 5435 | Redis 6380 | MinIO API 9100 / Console 9200
+#   Grafana 3200 | Loki 3100 | Prometheus 9090 | pgAdmin 5050
 
 services:
   postgres:
     ports:
-      - "127.0.0.1:${POSTGRES_PUBLISH_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PUBLISH_PORT:-5435}:5432"
 
   pgadmin:
     ports:
@@ -14,12 +20,12 @@ services:
 
   redis:
     ports:
-      - "127.0.0.1:${REDIS_PUBLISH_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PUBLISH_PORT:-6380}:6379"
 
   minio:
     ports:
-      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
-      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${MINIO_API_PORT:-9100}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9200}:9001"
 
   prometheus:
     ports:
@@ -27,7 +33,7 @@ services:
 
   grafana:
     ports:
-      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+      - "127.0.0.1:${GRAFANA_PORT:-3200}:3000"
 
   loki:
     ports:

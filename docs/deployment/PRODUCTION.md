@@ -13,8 +13,8 @@ VM 10.15.101.117
 ├── health-platform (ppkp-data)
 │   ├── ppkp-postgres     → sikerja_ppkp, mcu_monitor
 │   ├── ppkp-pgadmin      → 127.0.0.1:5050 (SSH tunnel)
-│   ├── ppkp-redis        → 127.0.0.1:6379
-│   └── ppkp-minio        → 127.0.0.1:9001
+│   ├── ppkp-redis        → 127.0.0.1:6380
+│   └── ppkp-minio        → 127.0.0.1:9200 (console)
 ├── dashboard-skrining    → :9006  (/sikerja/ via nginx host)
 └── mcu-monitor           → :9003  (/mcuppkp/ via nginx host)
 ```
@@ -34,6 +34,7 @@ Konvensi DB: [DATABASE-NAMING.md](./DATABASE-NAMING.md)
 - Git clone 3 repo (sibling atau path tetap)
 - Port aplikasi terbuka ke LAN: **9006**, **9003**
 - Port infra **tidak** perlu publik (bind localhost via `docker-compose.prod.yml`)
+- Port host infra: lihat [PORTS.md](./PORTS.md) (`5435`, `6380`, `9100`/`9200`, …)
 - `postgresql-client` di host (untuk `backup-all.sh`): `apt install postgresql-client`
 
 ---
@@ -161,7 +162,7 @@ docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml 
 
 ### MinIO — arsip backup
 
-- Console: SSH tunnel `ssh -L 9001:127.0.0.1:9001 user@VM` → http://127.0.0.1:9001
+- Console: SSH tunnel `ssh -L 9200:127.0.0.1:9200 user@VM` → http://127.0.0.1:9200
 - Login: `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`
 - Bucket: `MINIO_BACKUP_BUCKET` (default `minio.sikerja`)
 
@@ -409,6 +410,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec app php art
 | Topik | File |
 |-------|------|
 | **Workflow deploy & subdomain (PG)** | [PRODUCTION-DEPLOY-WORKFLOW.md](./PRODUCTION-DEPLOY-WORKFLOW.md) |
+| **Port infra (lokal vs produksi)** | [PORTS.md](./PORTS.md) |
 | Penamaan DB | [DATABASE-NAMING.md](./DATABASE-NAMING.md) |
 | Mapping env | [APP-ENV.md](./APP-ENV.md) |
 | Dashboard deploy | `dashboard-skrining/docs/DEPLOY.md` |

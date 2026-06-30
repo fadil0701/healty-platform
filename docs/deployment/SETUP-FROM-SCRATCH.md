@@ -8,7 +8,7 @@ Panduan urutan instalasi lokal (Windows + Docker Desktop) untuk stack PPKP DKI.
 |------|------------|
 | Docker Desktop | Aktif, context `desktop-linux` |
 | Repo sibling | Semua di folder yang sama, mis. `E:\laragon\www\` |
-| Port bebas | `5432`, `5050`, `6379`, `9006`, `9003` (sesuaikan di `.env` jika bentrok) |
+| Port bebas | Lokal: `5432`, `6379`, `9000`/`9001` — Produksi VM: [PORTS.md](./PORTS.md) (`5435`, `6380`, `9100`/`9200`) |
 
 Struktur folder:
 
@@ -266,7 +266,8 @@ Grafana: http://127.0.0.1:3000 (atau `GRAFANA_PORT` di `.env`)
 | MCU restart loop | Cek `PGSQL_PASSWORD` vs password di PostgreSQL |
 | Bridge 401 | Generate ulang di CKG (Bridging MCU), tempel ke MCU (Integrasi CKG) |
 | Bridge connection refused | Dashboard harus jalan di port 9006; cek `CKG_API_BASE_URL` |
-| Port 5432 bentrok | Set `POSTGRES_PUBLISH_PORT` di health-platform `.env` |
+| Port 5432 bentrok (lokal) | Set `POSTGRES_PUBLISH_PORT` di health-platform `.env` |
+| Port produksi VM | Pakai `.env.production.example` + `docker-compose.prod.yml` — lihat [PORTS.md](./PORTS.md) |
 
 ---
 

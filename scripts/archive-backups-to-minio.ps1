@@ -15,6 +15,14 @@ if (-not (Test-Path ".env")) {
     Write-Error "File .env tidak ditemukan di $Root"
 }
 
+Get-Content ".env" | ForEach-Object {
+    if ($_ -match '^\s*([^#=]+)=(.*)$') {
+        $name = $matches[1].Trim()
+        $value = $matches[2].Trim().Trim('"').Trim("'")
+        Set-Item -Path "env:$name" -Value $value
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($Date)) {
     $Date = Get-Date -Format "yyyy-MM-dd"
 }
@@ -43,4 +51,5 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host ""
-Write-Host "Selesai. MinIO Console: http://127.0.0.1:9001"
+$consolePort = if ($env:MINIO_CONSOLE_PORT) { $env:MINIO_CONSOLE_PORT } else { "9001" }
+Write-Host "Selesai. MinIO Console: http://127.0.0.1:$consolePort"

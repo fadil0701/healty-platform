@@ -75,6 +75,7 @@ Struktur di bucket: `minio.sikerja/pg-backups/YYYY-MM-DD/*.dump`
 
 | Topik | File |
 |-------|------|
+| **Port infra (lokal vs produksi)** | [PORTS.md](./PORTS.md) |
 | **Produksi VM** | [PRODUCTION.md](./PRODUCTION.md) |
 | **Deploy rutin & subdomain (PG)** | [PRODUCTION-DEPLOY-WORKFLOW.md](./PRODUCTION-DEPLOY-WORKFLOW.md) |
 | Setup lengkap | [SETUP-FROM-SCRATCH.md](./SETUP-FROM-SCRATCH.md) |
