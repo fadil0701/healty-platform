@@ -39,6 +39,15 @@ if $DOWN; then
 fi
 
 chmod +x "$ROOT/scripts/generate-pgadmin-config.sh"
+chmod +x "$ROOT/scripts/lib/"*.sh 2>/dev/null || true
+# shellcheck source=lib/load-env.sh
+source "$ROOT/scripts/lib/load-env.sh"
+# shellcheck source=lib/check-ports.sh
+source "$ROOT/scripts/lib/check-ports.sh"
+
+load_env_file "$ROOT/.env"
+check_infra_ports
+
 "$ROOT/scripts/generate-pgadmin-config.sh"
 
 mkdir -p storage/backups
@@ -50,8 +59,7 @@ else
     "${COMPOSE[@]}" up -d
 fi
 
-# shellcheck source=/dev/null
-set -a && source .env && set +a
+load_env_file "$ROOT/.env"
 
 echo ""
 echo "health-platform (produksi) berjalan."

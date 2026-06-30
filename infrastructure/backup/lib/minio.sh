@@ -4,8 +4,9 @@ set -euo pipefail
 
 minio_load_env() {
     local root="${1:?}"
-    # shellcheck source=/dev/null
-    [[ -f "$root/.env" ]] && set -a && source "$root/.env" && set +a
+    # shellcheck source=../../scripts/lib/load-env.sh
+    source "$root/scripts/lib/load-env.sh"
+    load_env_file "$root/.env"
     : "${MINIO_ROOT_USER:?Set MINIO_ROOT_USER di .env}"
     : "${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD di .env}"
     MINIO_BACKUP_BUCKET="${MINIO_BACKUP_BUCKET:-minio.sikerja}"

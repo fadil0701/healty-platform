@@ -7,13 +7,15 @@ ENV_FILE="${1:-$ROOT/.env}"
 PGPASS="$ROOT/infrastructure/pgadmin/pgpass"
 SERVERS="$ROOT/infrastructure/pgadmin/servers.generated.json"
 
+# shellcheck source=../lib/load-env.sh
+source "$ROOT/scripts/lib/load-env.sh"
+
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "File tidak ada: $ENV_FILE" >&2
     exit 1
 fi
 
-# shellcheck source=/dev/null
-set -a && source "$ENV_FILE" && set +a
+load_env_file "$ENV_FILE"
 
 SUPER_USER="${POSTGRES_SUPERUSER:-postgres}"
 SUPER_PASS="${POSTGRES_SUPERUSER_PASSWORD:-}"

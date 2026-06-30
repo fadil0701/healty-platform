@@ -373,6 +373,8 @@ Ringkas:
 | Gejala | Penyebab | Solusi |
 |--------|----------|--------|
 | `network ppkp-data not found` | health-platform belum jalan | `./scripts/install-production.sh` |
+| `.env: syntax error near (` | Nilai `.env` ada spasi/`()` tanpa kutip | Pakai `"..."` atau `git pull` + skrip terbaru (`load-env.sh`) |
+| `address already in use` (Redis/pg) | Port host bentrok — sering karena merge port compose tanpa `!reset` | `git pull` (fix `docker-compose.prod.yml`), lalu `compose down` + `up -d`; cek `ss -lntp` |
 | `password authentication failed` | Password tidak sinkron | Samakan `.env` + `ALTER USER` jika perlu |
 | `function curdate() does not exist` | Query MySQL di MCU | Rebuild image MCU (`docker compose build app`) |
 | `column "total_participants" does not exist` | HAVING alias di PG | Sudah diperbaiki di `QueryOptimizationService` — rebuild MCU |

@@ -9,8 +9,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-# shellcheck source=/dev/null
-[[ -f "$ROOT/.env" ]] && set -a && source "$ROOT/.env" && set +a
+# shellcheck source=../../scripts/lib/load-env.sh
+source "$ROOT/scripts/lib/load-env.sh"
+load_env_file "$ROOT/.env"
 
 UPLOAD_MINIO=0
 DATE=""

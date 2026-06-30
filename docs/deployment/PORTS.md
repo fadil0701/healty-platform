@@ -4,6 +4,8 @@ Port **host** (akses dari VM / SSH tunnel). Aplikasi di Docker (`dashboard-skrin
 
 ## Produksi VM (`docker-compose.prod.yml` + `.env.production.example`)
 
+Compose **menggabungkan** `ports` dari `docker-compose.yml` dan `docker-compose.prod.yml` kecuali pakai `ports: !reset` di override produksi. Tanpa reset, PostgreSQL bisa ikut bind `5432` host dan bentrok dengan Postgres native di VM.
+
 | Layanan | Variabel `.env` | Host (localhost VM) | Port container |
 |---------|-----------------|---------------------|----------------|
 | PostgreSQL | `POSTGRES_PUBLISH_PORT` | **5435** | 5432 |
